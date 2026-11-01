@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>你的灵魂城市 · 定居城市测试</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
+  :root{
+    --pink:#ff9dc7;
+    --pink-l:#ffd6e8;
+    --purple:#b79cff;
+    --purple-l:#e6dcff;
+    --ink:#4a3b52;
+    --ink-soft:#95879f;
+    --line:#f6ebf4;
+  }
+  html,body{min-height:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(120% 90% at 8% 0%, #ffe8f3 0%, transparent 55%),
+      radial-gradient(110% 90% at 95% 8%, #efe6ff 0%, transparent 55%),
+      radial-gradient(120% 90% at 50% 105%, #e3f6ff 0%, transparent 60%),
+      #fff5fa;
+    background-attachment:fixed;
+    min-height:100vh;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ===== 背景光斑 ===== */
+  .blob{
+    position:fixed;border-radius:50%;filter:blur(70px);opacity:.55;
+    pointer-events:none;z-index:0;
+  }
+  .b1{width:320px;height:320px;background:#ffc4e0;top:-90px;left:-90px;animation:drift 14s ease-in-out infinite;}
+  .b2{width:280px;height:280px;background:#d7c8ff;top:30%;right:-110px;animation:drift 18s ease-in-out infinite reverse;}
+  .b3{width:300px;height:300px;background:#bdeaff;bottom:-120px;left:20%;animation:drift 16s ease-in-out infinite;}
+  @keyframes drift{
+    0%,100%{transform:translate(0,0) scale(1);}
+    50%{transform:translate(24px,-28px) scale(1.12);}
+  }
+
+  /* ===== 漂浮小心心 ===== */
+  .sparkle{
+    position:fixed;pointer-events:none;z-index:1;font-size:16px;opacity:.5;
+    animation:rise 12s linear infinite;
+  }
+  @keyframes rise{
+    0%{transform:translateY(0) rotate(0);opacity:0;}
+    10%{opacity:.55;}
+    90%{opacity:.55;}
+    100%{transform:translateY(-110vh) rotate(320deg);opacity:0;}
+  }
+
+  /* ===== 布局 ===== */
+  .wrap{
+    position:relative;z-index:2;
+    width:100%;max-width:520px;margin:0 auto;
+    padding:40px 20px 64px;
+  }
+  .screen{display:none;}
+  .screen.active{display:block;animation:fadeUp .5s cubic-bezier(.22,.9,.3,1) both;}
+  @keyframes fadeUp{
+    from{opacity:0;transform:translateY(18px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+
+  .card{
+    background:rgba(255,255,255,.82);
+    -webkit-backdrop-filter:blur(22px);
+    backdrop-filter:blur(22px);
+    border:1px solid rgba(255,255,255,.95);
+    border-radius:32px;
+    padding:34px 26px;
+    box-shadow:
+      0 24px 64px -24px rgba(196,124,180,.42),
+      0 4px 14px rgba(200,150,200,.08);
+  }
+  .card + .card{margin-top:18px;}
+
+  /* ===== 开始页 ===== */
+  .hero{text-align:center;padding:46px 26px 40px;}
+  .hero-emoji{font-size:60px;line-height:1;display:inline-block;animation:float 3.4s ease-in-out infinite;}
+  @keyframes float{
+    0%,100%{transform:translateY(0) rotate(-3deg);}
+    50%{transform:translateY(-12px) rotate(3deg);}
+  }
+  h1{
+    font-size:27px;line-height:1.4;letter-spacing:-.6px;margin:20px 0 12px;
+    background:linear-gradient(120deg,#ff7fb6 0%,#b79cff 55%,#7ec8ff 100%);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:transparent;
+    font-weight:800;
+  }
+  .sub{font-size:14.5px;color:var(--ink-soft);line-height:1.8;letter-spacing:.2px;}
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    margin-top:30px;
+    padding:16px 46px;border:none;border-radius:999px;
+    font-size:16.5px;font-weight:700;letter-spacing:.5px;
+    color:#fff;cursor:pointer;font-family:inherit;
+    background:linear-gradient(135deg,#ffa8cf 0%,#c9a7ff 100%);
+    box-shadow:0 14px 30px -10px rgba(220,120,200,.85), inset 0 1px 0 rgba(255,255,255,.4);
+    transition:transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s;
+  }
+  .btn:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 20px 38px -10px rgba(220,120,200,.95);}
+  .btn:active{transform:translateY(0) scale(.98);}
+  .hint{font-size:12.5px;color:#c3b6ca;margin-top:18px;letter-spacing:.5px;}
+
+  .btn-ghost{
+    background:#fff;color:var(--ink-soft);
+    border:2px solid var(--line);
+    box-shadow:0 8px 22px -12px rgba(190,140,190,.5);
+    margin-top:22px;width:100%;padding:15px;
+    font-size:15px;
+  }
+  .btn-ghost:hover{border-color:var(--pink-l);color:var(--pink);background:#fffafd;}
+
+  /* ===== 答题页 ===== */
+  .quiz-head{display:flex;align-items:center;gap:14px;margin-bottom:26px;}
+  .progress{
+    flex:1;height:9px;background:#f6eaf4;border-radius:999px;overflow:hidden;
+    box-shadow:inset 0 1px 3px rgba(190,150,190,.12);
+  }
+  .progress-fill{
+    height:100%;width:10%;border-radius:999px;
+    background:linear-gradient(90deg,#ffb3d1,#c9a7ff,#a8e6ff);
+    background-size:200% 100%;
+    transition:width .45s cubic-bezier(.4,0,.2,1);
+    animation:shimmer 3s linear infinite;
+  }
+  @keyframes shimmer{
+    0%{background-position:0% 0;}
+    100%{background-position:200% 0;}
+  }
+  .qcount{font-size:13px;font-weight:700;color:#c9b6d4;letter-spacing:.5px;font-variant-numeric:tabular-nums;}
+  .qcount b{color:var(--pink);font-size:15px;}
+
+  h2.qtext{
+    font-size:20px;line-height:1.55;font-weight:800;
+    letter-spacing:-.3px;margin-bottom:22px;color:#503f5b;
+  }
+
+  .options{display:flex;flex-direction:column;gap:11px;}
+  .option{
+    display:flex;align-items:center;gap:14px;
+    width:100%;text-align:left;
+    background:#fff;
+    border:2px solid var(--line);
+    border-radius:20px;
+    padding:15px 17px;
+    font-size:15px;line-height:1.45;color:#54445f;
+    font-family:inherit;font-weight:500;
+    cursor:pointer;
+    transition:all .22s cubic-bezier(.34,1.4,.64,1);
+  }
+  .option .emo{font-size:21px;flex-shrink:0;transition:transform .25s;}
+  .option:hover{
+    border-color:var(--pink-l);
+    background:#fffafd;
+    transform:translateX(5px);
+    box-shadow:0 10px 24px -14px rgba(220,140,190,.8);
+  }
+  .option:hover .emo{transform:scale(1.22) rotate(-8deg);}
+  .option.picked{
+    border-color:var(--pink);
+    background:linear-gradient(135deg,#fff2f8,#f7f1ff);
+    transform:translateX(5px) scale(.99);
+  }
+
+  /* ===== 加载页 ===== */
+  .center{text-align:center;padding:60px 26px;}
+  .loader{
+    width:78px;height:78px;margin:0 auto 30px;border-radius:50%;
+    border:5px solid #ffe4f0;
+    border-top-color:var(--pink);
+    border-right-color:var(--purple);
+    animation:spin .9s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loadtext{font-size:16px;color:var(--ink-soft);font-weight:600;letter-spacing:.5px;}
+
+  /* ===== 结果页 ===== */
+  .result-card{text-align:center;padding:38px 26px 32px;}
+  .label{font-size:13px;color:#c0b0cb;letter-spacing:3px;font-weight:600;margin-bottom:14px;}
+  .city-name{
+    font-size:40px;font-weight:900;letter-spacing:-1.5px;
+    display:flex;align-items:center;justify-content:center;gap:12px;
+    margin-bottom:26px;
+    background:linear-gradient(120deg,#ff7fb6,#b79cff 60%,#7ec8ff);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:transparent;
+    animation:pop .6s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  .city-name span:first-child{-webkit-text-fill-color:initial;font-size:42px;}
+  @keyframes pop{
+    from{transform:scale(.7);opacity:0;}
+    to{transform:scale(1);opacity:1;}
+  }
+
+  .ring{
+    --deg:0%;
+    position:relative;
+    width:152px;height:152px;border-radius:50%;
+    margin:0 auto;
+    background:conic-gradient(from -90deg,#ffa8cf,#b79cff var(--deg),#f5eefb var(--deg));
+    display:grid;place-items:center;
+    transition:background .3s;
+    box-shadow:0 16px 40px -18px rgba(200,130,200,.7);
+  }
+  .ring-inner{
+    width:120px;height:120px;border-radius:50%;background:#fff;
+    display:flex;align-items:baseline;justify-content:center;gap:1px;
+    box-shadow:inset 0 2px 10px rgba(200,160,200,.08);
+  }
+  .ring-inner span{
+    font-size:38px;font-weight:900;letter-spacing:-2px;
+    background:linear-gradient(120deg,#ff7fb6,#b79cff);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;
+    align-self:center;
+  }
+  .ring-inner small{
+    font-size:15px;font-weight:800;color:#c9b6d4;align-self:center;margin-top:8px;
+  }
+  .match-label{font-size:12.5px;color:#c0b0cb;letter-spacing:2px;margin-top:16px;font-weight:600;}
+
+  .tags{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:22px;}
+  .tag{
+    font-size:12.5px;font-weight:600;padding:7px 15px;border-radius:999px;
+    color:#b07cc0;
+    background:linear-gradient(135deg,#fff0f7,#f3ecff);
+    border:1px solid #f7e6f5;
+    letter-spacing:.5px;
+  }
+
+  .reasons{
+    list-style:none;margin-top:26px;padding-top:24px;
+    border-top:1.5px dashed #f6eaf4;
+    display:flex;flex-direction:column;gap:13px;text-align:left;
+  }
+  .reasons li{
+    display:flex;gap:11px;align-items:flex-start;
+    font-size:14.5px;line-height:1.65;color:#6b5b77;
+    animation:fadeUp .5s both;
+  }
+  .reasons li .dot{
+    flex-shrink:0;width:20px;height:20px;border-radius:50%;
+    background:linear-gradient(135deg,#ffd0e5,#e0d3ff);
+    display:grid;place-items:center;font-size:11px;margin-top:2px;
+  }
+
+  .alt-card h3{
+    font-size:14px;font-weight:800;color:#a291ae;
+    letter-spacing:1.5px;margin-bottom:18px;
+  }
+  .alt-item{display:flex;align-items:center;gap:14px;padding:11px 0;}
+  .alt-item + .alt-item{border-top:1.5px dashed #f8f0f7;}
+  .alt-emoji{
+    width:46px;height:46px;border-radius:16px;flex-shrink:0;
+    display:grid;place-items:center;font-size:22px;
+    background:linear-gradient(135deg,#fff2f9,#f2ecff);
+    border:1px solid #f9edf7;
+  }
+  .alt-body{flex:1;min-width:0;}
+  .alt-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
+  .alt-name{font-size:15px;font-weight:700;color:#54445f;}
+  .alt-pct{font-size:14px;font-weight:800;color:var(--pink);font-variant-numeric:tabular-nums;}
+  .alt-bar{height:7px;background:#f6eaf4;border-radius:999px;overflow:hidden;}
+  .alt-bar i{
+    display:block;height:100%;border-radius:999px;
+    background:linear-gradient(90deg,#ffb3d1,#c9a7ff);
+    width:0;transition:width 1s cubic-bezier(.4,0,.2,1) .2s;
+  }
+
+  @media (max-width:400px){
+    .wrap{padding:26px 15px 50px;}
+    .card{padding:28px 20px;border-radius:26px;}
+    h1{font-size:23px;}
+    h2.qtext{font-size:18px;}
+    .city-name{font-size:34px;}
+    .option{font-size:14px;padding:14px 15px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="blob b1"></div>
+<div class="blob b2"></div>
+<div class="blob b3"></div>
+<div id="sparkles"></div>
+
+<div class="wrap">
+
+  <!-- ========== 开始页 ========== -->
+  <section class="screen active" id="s-start">
+    <div class="card hero">
+      <div class="hero-emoji">🌸</div>
+      <h1>你适合定居在哪座城市？</h1>
+      <p class="sub">10 个关于生活的小问题<br>帮你找到与灵魂最合拍的那座城 ✨</p>
+      <button class="btn" id="btnStart">开始测试</button>
+      <p class="hint">大约需要 1 分钟 · 遵从直觉就好</p>
+    </div>
+  </section>
+
+  <!-- ========== 答题页 ========== -->
+  <section class="screen" id="s-quiz">
+    <div class="card">
+      <div class="quiz-head">
+        <div class="progress"><div class="progress-fill" id="pfill"></div></div>
+        <div class="qcount"><b id="qidx">1</b>/<span id="qtotal">10</span></div>
+      </div>
+      <h2 class="qtext" id="qtext"></h2>
+      <div class="options" id="opts"></div>
+    </div>
+  </section>
+
+  <!-- ========== 加载页 ========== -->
+  <section class="screen" id="s-loading">
+    <div class="card center">
+      <div class="loader"></div>
+      <p class="loadtext" id="loadtext">正在分析你的生活偏好…</p>
+    </div>
+  </section>
+
+  <!-- ========== 结果页 ========== -->
+  <section class="screen" id="s-result">
+    <div class="card result-card">
+      <p class="label">你 的 灵 魂 城 市 是</p>
+      <div class="city-name"><span id="r-emoji">🐼</span><span id="r-name">成都</span></div>
+
+      <div class="ring" id="ring">
+        <div class="ring-inner"><span id="r-pct">0</span><small>%</small></div>
+      </div>
+      <p class="match-label">灵 魂 契 合 度</p>
+
+      <div class="tags" id="r-tags"></div>
+      <ul class="reasons" id="r-reasons"></ul>
+    </div>
+
+    <div class="card alt-card">
+      <h3>也 很 适 合 你 的 城 市</h3>
+      <div id="r-alts"></div>
+    </div>
+
+    <button class="btn btn-ghost" id="btnRestart">再测一次 ↺</button>
+  </section>
+
+</div>
+
+<script>
+/* =========================================================
+   城市数据（0-100 分制）
+   pace   生活节奏：0 极慢 → 100 极快
+   cost   消费水平：0 便宜 → 100 昂贵
+   warm   气候温暖：0 偏冷/四季分明 → 100 温热
+   nature 自然风光
+   culture 文化艺术
+   career 职业机会
+   social 社交热闹
+   sea    海洋感
+   food   美食
+   ========================================================= */
+const CITIES = [
+  {name:'成都', emoji:'🐼', tags:['慢生活','烟火气','美食之都'],
+   s:{pace:30,cost:35,warm:58,nature:55,culture:75,career:60,social:85,sea:10,food:95}},
+  {name:'杭州', emoji:'🍃', tags:['诗意江南','互联网','四季分明'],
+   s:{pace:62,cost:72,warm:48,nature:80,culture:82,career:82,social:60,sea:30,food:70}},
+  {name:'大理', emoji:'⛰️', tags:['苍山洱海','躺平','数字游民'],
+   s:{pace:8,cost:22,warm:72,nature:95,culture:60,career:25,social:45,sea:20,food:55}},
+  {name:'厦门', emoji:'🌊', tags:['海边','文艺','慢半拍'],
+   s:{pace:35,cost:62,warm:82,nature:75,culture:58,career:52,social:55,sea:95,food:75}},
+  {name:'上海', emoji:'🌃', tags:['摩登','机会多','精致'],
+   s:{pace:92,cost:95,warm:45,nature:40,culture:95,career:98,social:65,sea:55,food:78}},
+  {name:'北京', emoji:'🏯', tags:['文化底蕴','拼搏','大气'],
+   s:{pace:88,cost:90,warm:18,nature:40,culture:98,career:95,social:60,sea:0,food:62}},
+  {name:'深圳', emoji:'🚀', tags:['年轻','搞钱','海边'],
+   s:{pace:95,cost:88,warm:88,nature:55,culture:48,career:95,social:55,sea:85,food:65}},
+  {name:'长沙', emoji:'🌶️', tags:['夜生活','辣','热闹'],
+   s:{pace:48,cost:25,warm:70,nature:45,culture:65,career:55,social:92,sea:0,food:95}},
+  {name:'青岛', emoji:'🍺', tags:['海风','红瓦','惬意'],
+   s:{pace:40,cost:48,warm:38,nature:70,culture:50,career:50,social:58,sea:90,food:72}},
+  {name:'苏州', emoji:'🏮', tags:['园林','温婉','富庶'],
+   s:{pace:50,cost:65,warm:50,nature:65,culture:85,career:70,social:45,sea:25,food:66}},
+  {name:'昆明', emoji:'🌸', tags:['春城','阳光','舒适'],
+   s:{pace:20,cost:30,warm:88,nature:85,culture:45,career:40,social:45,sea:5,food:60}},
+  {name:'西安', emoji:'🏛️', tags:['历史','碳水','烟火气'],
+   s:{pace:48,cost:30,warm:32,nature:45,culture:92,career:60,social:60,sea:0,food:88}},
+  {name:'重庆', emoji:'🌉', tags:['魔幻','火锅','江湖气'],
+   s:{pace:58,cost:28,warm:68,nature:50,culture:62,career:60,social:82,sea:0,food:92}},
+  {name:'广州', emoji:'🥟', tags:['早茶','务实','温暖'],
+   s:{pace:70,cost:60,warm:90,nature:45,culture:65,career:82,social:70,sea:50,food:92}}
+];
+
+const DIMS = ['pace','cost','warm','nature','culture','career','social','sea','food'];
+
+/* ===================== 题目 ===================== */
+const QUESTIONS = [
+  { q:'你理想中的周末早晨是什么样的？',
+    opts:[
+      {e:'☕', t:'睡到自然醒，慢悠悠做顿早饭',       v:{pace:15, food:65}},
+      {e:'🌿', t:'去爬山 / 海边 / 公园大口吸氧',      v:{nature:90, pace:35}},
+      {e:'🎨', t:'逛展、看话剧、泡书店',              v:{culture:90, pace:45}},
+      {e:'🎉', t:'约朋友探店，人多才热闹',            v:{social:90, food:80, pace:60}}
+    ]},
+  { q:'关于工作，你更在意的是？',
+    opts:[
+      {e:'💼', t:'成长空间和收入，愿意拼一把',        v:{career:90, pace:80, cost:70}},
+      {e:'🌸', t:'稳定不加班，生活才是主角',          v:{career:40, pace:20}},
+      {e:'💻', t:'自由职业 / 远程，边生活边工作',     v:{career:55, pace:25, nature:65}},
+      {e:'✨', t:'创意行业，氛围感最重要',            v:{culture:85, career:60}}
+    ]},
+  { q:'你的钱包状况比较接近哪一种？',
+    opts:[
+      {e:'🪙', t:'预算有限，希望房租友好一点',        v:{cost:10}},
+      {e:'💰', t:'中等预算，性价比优先',              v:{cost:45}},
+      {e:'💎', t:'为了生活品质，可以多花点',          v:{cost:80}},
+      {e:'👑', t:'不差钱，想要最好的',                v:{cost:95}}
+    ]},
+  { q:'你对气候的偏好是？',
+    opts:[
+      {e:'☀️', t:'超级怕冷，越暖越好',                v:{warm:95}},
+      {e:'🍂', t:'喜欢四季分明，秋天最美',            v:{warm:40}},
+      {e:'❄️', t:'想看到冬天飘雪',                    v:{warm:10}},
+      {e:'💨', t:'热一点可以，但别太潮湿',            v:{warm:72}}
+    ]},
+  { q:'下班 / 放学后，你最想做的事是？',
+    opts:[
+      {e:'🍜', t:'找家小馆子吃饭喝酒',                v:{food:90, social:70}},
+      {e:'🛋️', t:'回家躺平，一个人待着',              v:{social:20, pace:25}},
+      {e:'🌊', t:'去海边 / 江边散步吹风',             v:{sea:80, nature:65}},
+      {e:'🎧', t:'去 livehouse、展览、书店',          v:{culture:85, social:50}}
+    ]},
+  { q:'你希望城市里有海吗？',
+    opts:[
+      {e:'🌊', t:'必须要有海！',                      v:{sea:95}},
+      {e:'🏞️', t:'有江有湖就够了',                    v:{sea:40}},
+      {e:'🏙️', t:'不太在意，城市感更重要',            v:{sea:10}}
+    ]},
+  { q:'你对美食的要求是？',
+    opts:[
+      {e:'😋', t:'吃货本货，一天三顿都要好吃',        v:{food:95}},
+      {e:'🍱', t:'有几家喜欢的就够了',                v:{food:55}},
+      {e:'🥗', t:'能吃饱就行，不太挑',                v:{food:20}}
+    ]},
+  { q:'你喜欢的城市节奏是？',
+    opts:[
+      {e:'🐌', t:'慢慢来，急什么呢',                  v:{pace:10}},
+      {e:'⚖️', t:'张弛有度，别太卷也别太闲',          v:{pace:45}},
+      {e:'⚡', t:'快节奏才带劲',                      v:{pace:90}}
+    ]},
+  { q:'在社交这件事上，你更像——',
+    opts:[
+      {e:'🫶', t:'朋友多，随时都能约出来',            v:{social:90}},
+      {e:'🫂', t:'有几个知心朋友就好',                v:{social:45}},
+      {e:'☁️', t:'我更喜欢一个人',                    v:{social:10}}
+    ]},
+  { q:'周末推开门，你最想看到的是？',
+    opts:[
+      {e:'🌲', t:'山野森林，随时能去徒步',            v:{nature:95}},
+      {e:'🌳', t:'城市公园和河边步道',                v:{nature:55}},
+      {e:'🛍️', t:'商场、咖啡馆、电影院',              v:{nature:15, culture:60}}
+    ]}
+];
+
+/* ===================== 理由文案 ===================== */
+const REASONS = {
+  pace:   c => c < 35 ? '这里的日子慢悠悠的，刚好配得上你的步调'
+            : c > 70 ? '城市的快节奏会推着你一起往前跑，正合你意'
+            : '张弛有度的节奏，不会让你喘不过气',
+  cost:   c => c < 35 ? '生活成本很友好，钱包不会被掏空'
+            : c > 75 ? '消费水平和你的预算刚好对得上'
+            : '性价比在线，钱花得踏实',
+  warm:   c => c > 70 ? '气候温暖，冬天也不用裹成粽子'
+            : c < 35 ? '四季分明，能好好感受季节变换'
+            : '温度刚刚好，不闷也不冷',
+  nature: c => c > 75 ? '抬头就是山野和绿意，随时能去撒野'
+            : c > 45 ? '城里有公园，城外有风景'
+            : '把自然留给周末，日常交给城市',
+  culture:c => c > 80 ? '展览、书店、livehouse 从不缺席'
+            : c > 50 ? '有点文艺，又不会太端着'
+            : '生活重心不在文艺上，但也绝不无聊',
+  career: c => c > 80 ? '机会多，你的野心能落地生根'
+            : c > 50 ? '工作机会够用，压力没那么大'
+            : '不用卷，把力气留给生活本身',
+  social: c => c > 75 ? '这里的人热情，随时都能约上朋友'
+            : c > 45 ? '社交不黏不散，浓度刚刚好'
+            : '没人打扰，独处也很自在',
+  sea:    c => c > 75 ? '有海的城市，心也跟着开阔起来'
+            : c > 40 ? '有江有湖，散个步就能看见水'
+            : '没有海，但城市的烟火气足够热闹',
+  food:   c => c > 85 ? '好吃的太多，一天三顿都要犯选择困难'
+            : c > 55 ? '好吃的不少，日常不会亏待你的胃'
+            : '吃得简单，但生活不将就'
+};
+
+/* ===================== 状态 ===================== */
+let answers = [];
+let curQ = 0;
+
+const $ = id => document.getElementById(id);
+const show = id => {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+  window.scrollTo({top:0, behavior:'smooth'});
+};
+
+/* ===================== 漂浮装饰 ===================== */
+(function initSparkles(){
+  const emojis = ['✨','💗','🌸','⭐','🫧','💫','🎀'];
+  const box = $('sparkles');
+  for(let i=0;i<9;i++){
+    const el = document.createElement('div');
+    el.className = 'sparkle';
+    el.textContent = emojis[i % emojis.length];
+    el.style.left = Math.random()*100 + 'vw';
+    el.style.top = (100 + Math.random()*30) + 'vh';
+    el.style.fontSize = (12 + Math.random()*14) + 'px';
+    el.style.animationDuration = (13 + Math.random()*12) + 's';
+    el.style.animationDelay = (-Math.random()*20) + 's';
+    box.appendChild(el);
+  }
+})();
+
+/* ===================== 答题流程 ===================== */
+function startQuiz(){
+  answers = [];
+  curQ = 0;
+  $('qtotal').textContent = QUESTIONS.length;
+  show('s-quiz');
+  renderQ();
+}
+
+function renderQ(){
+  const q = QUESTIONS[curQ];
+  $('qidx').textContent = curQ + 1;
+  $('pfill').style.width = ((curQ) / QUESTIONS.length * 100 + 4) + '%';
+  $('qtext').textContent = q.q;
+
+  const box = $('opts');
+  box.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.innerHTML = `<span class="emo">${opt.e}</span><span>${opt.t}</span>`;
+    btn.addEventListener('click', () => pick(i, btn));
+    box.appendChild(btn);
+  });
+
+  // 重新触发入场动画
+  $('qtext').style.animation = 'none';
+  box.style.animation = 'none';
+  void box.offsetWidth;
+  $('qtext').style.animation = 'fadeUp .4s ease both';
+  box.style.animation = 'fadeUp .45s ease both';
+}
+
+let locked = false;
+function pick(i, btn){
+  if(locked) return;
+  locked = true;
+  btn.classList.add('picked');
+  answers[curQ] = i;
+
+  setTimeout(() => {
+    locked = false;
+    curQ++;
+    if(curQ < QUESTIONS.length){
+      renderQ();
+    } else {
+      $('pfill').style.width = '100%';
+      goLoading();
+    }
+  }, 260);
+}
+
+/* ===================== 计算 ===================== */
+function computeUser(){
+  const sums = {}, counts = {};
+  QUESTIONS.forEach((q, i) => {
+    const opt = q.opts[answers[i]];
+    if(!opt) return;
+    for(const k in opt.v){
+      sums[k] = (sums[k] || 0) + opt.v[k];
+      counts[k] = (counts[k] || 0) + 1;
+    }
+  });
+  const user = {};
+  DIMS.forEach(d => user[d] = counts[d] ? sums[d] / counts[d] : 50);
+  return user;
+}
+
+function computeResults(user){
+  const list = CITIES.map(c => {
+    let sq = 0;
+    DIMS.forEach(d => { const diff = user[d] - c.s[d]; sq += diff * diff; });
+    const dist = Math.sqrt(sq / DIMS.length);
+    const match = Math.max(45, Math.min(99, Math.round(100 - dist * 1.25)));
+    return { ...c, match };
+  });
+  list.sort((a, b) => b.match - a.match);
+  return list;
+}
+
+function buildReasons(user, city){
+  return DIMS
+    .map(d => ({ d, sim: 100 - Math.abs(user[d] - city.s[d]) }))
+    .sort((a, b) => b.sim - a.sim)
+    .slice(0, 4)
+    .map(o => REASONS[o.d](city.s[o.d]));
+}
+
+/* ===================== 加载动画 ===================== */
+const LOAD_MSGS = [
+  '正在分析你的生活偏好…',
+  '正在对比 14 座城市的气质…',
+  '正在计算灵魂契合度…',
+  '找到啦，就是它了 ✨'
+];
+
+function goLoading(){
+  show('s-loading');
+  let i = 0;
+  $('loadtext').textContent = LOAD_MSGS[0];
+  const timer = setInterval(() => {
+    i++;
+    if(i < LOAD_MSGS.length){
+      $('loadtext').style.opacity = 0;
+      setTimeout(() => {
+        $('loadtext').textContent = LOAD_MSGS[i];
+        $('loadtext').style.opacity = 1;
+      }, 180);
+    }
+  }, 520);
+
+  setTimeout(() => {
+    clearInterval(timer);
+    const user = computeUser();
+    const results = computeResults(user);
+    renderResult(user, results);
+    show('s-result');
+  }, 2150);
+}
+
+/* ===================== 渲染结果 ===================== */
+function renderResult(user, results){
+  const top = results[0];
+
+  $('r-emoji').textContent = top.emoji;
+  $('r-name').textContent = top.name;
+
+  // 圆环 + 数字动画
+  const ring = $('ring');
+  const pctEl = $('r-pct');
+  let cur = 0;
+  const target = top.match;
+  const dur = 1100;
+  const t0 = performance.now();
+
+  function tick(now){
+    const p = Math.min(1, (now - t0) / dur);
+    const eased = 1 - Math.pow(1 - p, 3);
+    cur = Math.round(target * eased);
+    pctEl.textContent = cur;
+    ring.style.setProperty('--deg', cur + '%');
+    if(p < 1) requestAnimationFrame(tick);
+  }
+  ring.style.setProperty('--deg', '0%');
+  requestAnimationFrame(tick);
+
+  // 标签
+  $('r-tags').innerHTML = top.tags.map(t => `<span class="tag">#${t}</span>`).join('');
+
+  // 理由
+  const reasons = buildReasons(user, top);
+  const ul = $('r-reasons');
+  ul.innerHTML = '';
+  reasons.forEach((txt, i) => {
+    const li = document.createElement('li');
+    li.style.animationDelay = (i * 0.12 + 0.3) + 's';
+    li.innerHTML = `<span class="dot">✦</span><span>${txt}</span>`;
+    ul.appendChild(li);
+  });
+
+  // 备选城市
+  const alts = results.slice(1, 4);
+  const box = $('r-alts');
+  box.innerHTML = '';
+  alts.forEach(c => {
+    const item = document.createElement('div');
+    item.className = 'alt-item';
+    item.innerHTML = `
+      <div class="alt-emoji">${c.emoji}</div>
+      <div class="alt-body">
+        <div class="alt-top">
+          <span class="alt-name">${c.name}</span>
+          <span class="alt-pct">${c.match}%</span>
+        </div>
+        <div class="alt-bar"><i data-w="${c.match}"></i></div>
+      </div>`;
+    box.appendChild(item);
+  });
+
+  requestAnimationFrame(() => {
+    box.querySelectorAll('.alt-bar i').forEach(el => {
+      el.style.width = el.dataset.w + '%';
+    });
+  });
+}
+
+/* ===================== 事件绑定 ===================== */
+$('btnStart').addEventListener('click', startQuiz);
+$('btnRestart').addEventListener('click', () => {
+  answers = [];
+  curQ = 0;
+  $('pfill').style.width = '0%';
+  show('s-start');
+});
+
+// 预加载首屏
+$('pfill').style.width = '0%';
+</script>
+</body>
+</html>
